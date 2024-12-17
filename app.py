@@ -1,4 +1,5 @@
 import os
+import io
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
@@ -233,24 +234,24 @@ elif app_mode == 'Disease Recognition':
     if input_option == "upload from device":
         # Allow user to upload an image file
         uploaded_file = st.file_uploader("Choose a tomato image...", type=["jpg", "jpeg", "png"])
-        if st.button('Show Image'):
-            if uploaded_file is not None:
-                st.image(uploaded_file, caption='Uploaded Image', use_container_width=True)
-                st.write('')
-            else:
-                st.error("Please upload an image first.")
+        if uploaded_file is not None:
+            st.image(uploaded_file, caption='Uploaded Image', use_container_width=True)
+            st.write('')
+        else:
+            st.error("Please upload an image first.")
         # Predict Button
         if st.button('Predict'):
             if uploaded_file is not None:
                 with st.spinner('Please wait...'):
                     model = load_model()  # Load the model
                     if model:
-                        result_index, prediction_probs = predict(uploaded_fe, model)
+                        result_index, prediction_probs = predict(uploaded_file, model)
                         if result_index is not None:
 
                             predicted_class = class_name[result_index]
 
                             st.success(f'Model is predicting it’s  {predicted_class}')
+                            st.balloons()
 
                             progress = st.progress(0)
                             for i in range(100):
@@ -260,20 +261,30 @@ elif app_mode == 'Disease Recognition':
                             if predicted_class in recommendations:
                                 # Display the recommendation for the predicted class
                                 display_recommendation(predicted_class)
+                                st.subheader('Recommended Actions:')
+                                st.markdown(
+                                    f" 🧪 **Scientific Name:** {recommendations[predicted_class]['Scientific Name']}")
+                                st.markdown(f" 🩺 **Symptoms:**")
+                                st.write("\n".join(
+                                    f"- {symptom}" for symptom in recommendations[predicted_class]['Symptoms']))
+                                st.markdown(f" 🛠️ **Actions:**")
+                                st.write(
+                                    "\n".join(f"- {action}" for action in recommendations[predicted_class]['Actions']))
+                            else:
+                                st.error(f"No recommendations available for {predicted_class}")
 
     elif input_option == "Take Photo":
         # Allow user to take an image using device camera
         st.info("Please ensure your browser allows camera access to use this feature.")
 
         camera_image = st.camera_input("Take a picture")
-        if st.button('Show Image'):
-            if camera_image is not None:
-                # open image taken
-                image = Image.open(io.BytesIO(camera_image.getvalue()))
-                st.image(image, caption="Taken image", use_container_width=True)
-                st.write('')
-            else:
-                st.error("Please take a picture first.")
+        if camera_image is not None:
+            # open image taken
+            image = Image.open(io.BytesIO(camera_image.getvalue()))
+            st.image(image, caption="Taken image", use_container_width=True)
+            st.write('')
+        else:
+            st.error("Please take a picture first.")
         # Predict Button
         if st.button('Predict'):
             if camera_image is not None:
@@ -286,6 +297,7 @@ elif app_mode == 'Disease Recognition':
                             predicted_class = class_name[result_index]
 
                             st.success(f'Model is predicting it is  {predicted_class}')
+                            st.balloons()
 
                             progress = st.progress(0)
                             for i in range(100):
@@ -295,3 +307,14 @@ elif app_mode == 'Disease Recognition':
                             if predicted_class in recommendations:
                                 # Display the recommendation for the predicted class
                                 display_recommendation(predicted_class)
+                                st.subheader('Recommended Actions:')
+                                st.markdown(
+                                    f" 🧪 **Scientific Name:** {recommendations[predicted_class]['Scientific Name']}")
+                                st.markdown(f" 🩺 **Symptoms:**")
+                                st.write("\n".join(
+                                    f"- {symptom}" for symptom in recommendations[predicted_class]['Symptoms']))
+                                st.markdown(f" 🛠️ **Actions:**")
+                                st.write(
+                                    "\n".join(f"- {action}" for action in recommendations[predicted_class]['Actions']))
+                            else:
+                                st.error(f"No recommendations available for {predicted_class}")
