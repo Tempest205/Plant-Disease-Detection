@@ -175,7 +175,7 @@ app_mode = st.sidebar.selectbox('Select Page', ['Home', 'About', 'Disease Recogn
 if app_mode == 'Home':
     st.title('TOMATO DISEASE CLASSIFICATION')
     image_path = 'tomato image/home page image.jpg'
-    st.image(image_path, use_column_width=True)
+    st.image(image_path, use_container_width=True)
     st.markdown('''Our mission is to help farmers, gardeners, and plant enthusiasts quickly identify tomato diseases for healthier and more resilient crops. Just upload a plant image, and our advanced algorithms will analyze it to detect any signs of disease!
 
 ### 🌱 How It Works
@@ -225,7 +225,7 @@ elif app_mode == 'Disease Recognition':
     st.header('Disease Recognition')
     uploaded_file = st.file_uploader("Choose a tomato image...", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
-        st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
+        st.image(uploaded_file, caption='Uploaded Image', use_container_width=True)
     else:
             st.error("Please upload an image first.")
     # Predict Button
