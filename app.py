@@ -172,6 +172,8 @@ st.sidebar.title('Dashboard')
 app_mode = st.sidebar.selectbox('Select Page', ['Home', 'About', 'Disease Recognition'])
 
 # Home Page
+def display_recommendation(predicted_class):
+    pass
 if app_mode == 'Home':
     st.title('TOMATO DISEASE CLASSIFICATION')
     image_path = 'home page image.jpg'
@@ -221,36 +223,75 @@ elif app_mode == 'About':
 
 
 # Prediction Page
+
 elif app_mode == 'Disease Recognition':
+    import time
+
     st.header('Disease Recognition')
-    uploaded_file = st.file_uploader("Choose a tomato image...", type=["jpg", "jpeg", "png"])
-    if uploaded_file is not None:
-        st.image(uploaded_file, caption='Uploaded Image', use_container_width=True)
-    else:
-            st.error("Please upload an image first.")
-    # Predict Button
-    if st.button('Predict'):
-        if uploaded_file is not None:
-            with st.spinner('Please wait...'):
-                model = load_model()  # Load the model
-                if model:
-                    result_index, prediction_probs = predict(uploaded_file, model)
-                    if result_index is not None:
 
-                        predicted_class = class_name[result_index]
+    input_option = st.radio("Choose an input method:", ("upload from device", "Take Photo"))
+    if input_option == "upload from device":
+        # Allow user to upload an image file
+        uploaded_file = st.file_uploader("Choose a tomato image...", type=["jpg", "jpeg", "png"])
+        if st.button('Show Image'):
+            if uploaded_file is not None:
+                st.image(uploaded_file, caption='Uploaded Image', use_container_width=True)
+                st.write('')
+            else:
+                st.error("Please upload an image first.")
+        # Predict Button
+        if st.button('Predict'):
+            if uploaded_file is not None:
+                with st.spinner('Please wait...'):
+                    model = load_model()  # Load the model
+                    if model:
+                        result_index, prediction_probs = predict(uploaded_fe, model)
+                        if result_index is not None:
 
-                        st.success(f'Model is predicting it’s  {predicted_class}')
-                        st.balloons()
-                        if predicted_class in recommendations:
-                            # Display the recommendation for the predicted class
-                            st.subheader('Recommended Actions:')
-                            st.markdown(f" 🧪 **Scientific Name:** {recommendations[predicted_class]['Scientific Name']}")
-                            st.markdown(f" 🩺 **Symptoms:**")
-                            st.write("\n".join(f"- {symptom}" for symptom in recommendations[predicted_class]['Symptoms']))
-                            st.markdown(f" 🛠️ **Actions:**")
-                            st.write("\n".join(f"- {action}" for action in recommendations[predicted_class]['Actions']))
-                        else:
-                            st.error(f"No recommendations available for {predicted_class}")
-        else:
-            st.error("Please upload an image first.")
+                            predicted_class = class_name[result_index]
 
+                            st.success(f'Model is predicting it’s  {predicted_class}')
+
+                            progress = st.progress(0)
+                            for i in range(100):
+                                time.sleep(0.05)  # Simulate some work
+                            progress.progress(i + 1)
+
+                            if predicted_class in recommendations:
+                                # Display the recommendation for the predicted class
+                                display_recommendation(predicted_class)
+
+    elif input_option == "Take Photo":
+        # Allow user to take an image using device camera
+        st.info("Please ensure your browser allows camera access to use this feature.")
+
+        camera_image = st.camera_input("Take a picture")
+        if st.button('Show Image'):
+            if camera_image is not None:
+                # open image taken
+                image = Image.open(io.BytesIO(camera_image.getvalue()))
+                st.image(image, caption="Taken image", use_container_width=True)
+                st.write('')
+            else:
+                st.error("Please take a picture first.")
+        # Predict Button
+        if st.button('Predict'):
+            if camera_image is not None:
+                with st.spinner('Please wait...'):
+                    model = load_model()  # Load the model
+                    if model:
+                        result_index, prediction_probs = predict(camera_image, model)
+                        if result_index is not None:
+
+                            predicted_class = class_name[result_index]
+
+                            st.success(f'Model is predicting it is  {predicted_class}')
+
+                            progress = st.progress(0)
+                            for i in range(100):
+                                time.sleep(0.05)  # Simulate some work
+                            progress.progress(i + 1)
+
+                            if predicted_class in recommendations:
+                                # Display the recommendation for the predicted class
+                                display_recommendation(predicted_class)
