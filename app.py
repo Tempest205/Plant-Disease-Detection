@@ -260,7 +260,7 @@ if not user:
     phone = st.sidebar.text_input("Phone Number")
 
     if st.sidebar.button("Register"):
-        if user_id and name and email and phone:
+        if user_id and name and email and phone is not None:
             add_user_details(user_id, name, email, phone)
             st.sidebar.success("Registration successful! Please refresh to log in.")
         else:
