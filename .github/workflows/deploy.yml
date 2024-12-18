@@ -1,0 +1,34 @@
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - main  # Trigger this workflow on push to the `main` branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Create Firebase credentials file
+        run: echo "${{ secrets.FIREBASE_CONFIG }}" > firebase_service_account.json
+
+      - name: Deploy the app
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/firebase_service_account.json
+        run: |
+          # Make sure to install Firebase Admin SDK and other dependencies
+          pip install firebase-admin
+          python app.py  # or any command to start your app
