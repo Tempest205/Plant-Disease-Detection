@@ -15,7 +15,7 @@ from twilio.rest import Client
 
 # Initialize Firebase
 if not firebase_admin._apps:  # Check if no Firebase app is initialized
-    cred = credentials.Certificate(os.getenv('GOOGLE_APPLICATION_CREDENTIALS'))
+    cred = credentials.Certificate(os.getenv('FIREBASE_CONFIG'))
     firebase_admin.initialize_app(cred)
 
 # Initialize Firestore
