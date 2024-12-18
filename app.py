@@ -1,7 +1,6 @@
 import os
 import io
 import cv2
-import json
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
