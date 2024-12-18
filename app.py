@@ -279,7 +279,7 @@ def display_recommendation(predicted_class):
 
 if app_mode == 'Home':
     st.title('TOMATO DISEASE CLASSIFICATION')
-    image_path = 'tomato image/home page image.jpg'
+    image_path = 'home page image.jpg'
     st.image(image_path, use_container_width=True)
     st.markdown('''Our mission is to help farmers, gardeners, and plant enthusiasts quickly identify tomato diseases for healthier and more resilient crops. Just upload a plant image, and our advanced algorithms will analyze it to detect any signs of disease!
 
