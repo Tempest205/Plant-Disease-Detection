@@ -296,7 +296,6 @@ elif app_mode == 'About':
 RPI_API_URL = "http://192.168.137.79:8000/capture_and_predict"
 
 elif app_mode == 'Disease Recognition':
-    import time
     st.header('Disease Recognition')
 
     input_option = st.radio("Choose an input method:",
