@@ -47,8 +47,11 @@ def capture_and_predict():
     subprocess.run([
         "libcamera-still",
         "-o", image_path,
-        ])
-        time.sleep(interval)
+    ])
+    
+    # Add any desired delay (e.g., interval)
+    time.sleep(interval)
+    
     return image_path
 
     # Initialize session state for the captured image
