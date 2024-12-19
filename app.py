@@ -7,13 +7,14 @@ import numpy as np
 import pandas as pd
 import csv
 import io
-
+from fastapi import FastAPI, UploadFile, File
+import requests
 #For image capture
 import time
 import threading
 import subprocess
 
-
+app = FastAPI()
 # Class Names
 class_name = [
     'Bacterial Spot__Blight',
@@ -37,20 +38,15 @@ def load_model():
         st.error(f"Error loading model: {e}")
         return None
 
-# Function to capture images using the CSI camera
-def capture_image(folder="captured_images", interval=10, num_images=1):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    for i in range(num_images):
-        image_path = os.path.join(folder, f"image_{i+1}.jpg")
-        subprocess.run([
-            "libcamera-still",
-            "-o", image_path,
-            "--awb", "auto",  # Adjust white balance
-            "--brightness", "0.0",  # Neutral brightness
-            "--contrast", "1.0",  # Neutral contrast
-            "--saturation", "0.0",  # Neutral saturation
-            "--timeout", "1000"  # Capture timeout in milliseconds
+@app.post("/capture_and_predict")
+def capture_and_predict():
+    """Capture an image using CSI camera and make predictions."""
+    image_path = "/tmp/captured_image.jpg"
+
+    # Capture image using libcamera-still
+    subprocess.run([
+        "libcamera-still",
+        "-o", image_path,
         ])
         time.sleep(interval)
     return image_path
@@ -293,7 +289,8 @@ elif app_mode == 'About':
 
 
 # Prediction Page
-
+# Raspberry Pi API endpoint
+RPI_API_URL = "http://192.168.137.79:8000/capture_and_predict" 
 elif app_mode == 'Disease Recognition':
     import time
     st.header('Disease Recognition')
@@ -320,12 +317,13 @@ elif app_mode == 'Disease Recognition':
     if input_option == "Upload from Device":
         st.info("This option will trigger the CSI camera to capture 10 images.")
 
-        # Button to trigger the image capture
-        if st.button('Start Image Capture'):
-            with st.spinner('Capturing image...'):
-                captured_image_path = capture_image()
-                st.session_state.captured_image = captured_image_path
-            st.success('Image captured!')
+        # Button to trigger the Raspberry Pi API
+    if st.button("Capture and Predict"):
+        with st.spinner("Communicating with Raspberry Pi..."):
+            try:
+                response = requests.post(RPI_API_URL)
+                if response.status_code == 200:
+                    data = response.json()
 
         # Display captured image 
         if st.session_state.captured_image:
