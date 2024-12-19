@@ -293,7 +293,8 @@ elif app_mode == 'About':
 
 # Prediction Page
 # Raspberry Pi API endpoint
-RPI_API_URL = "http://192.168.137.79:8000/capture_and_predict" 
+RPI_API_URL = "http://192.168.137.79:8000/capture_and_predict"
+
 elif app_mode == 'Disease Recognition':
     import time
     st.header('Disease Recognition')
