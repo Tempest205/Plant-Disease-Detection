@@ -1,91 +1,18 @@
 import os
-import io
 import cv2
-import json
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
 import numpy as np
-import firebase_admin
-from firebase_admin import credentials, firestore
-from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from twilio.rest import Client
+import pandas as pd
+import csv
+import io
 
-# Initialize Firebase
-if not firebase_admin._apps:  # Check if no Firebase app is initialized
-    cred = credentials.Certificate("tomato-disease-webapp-firebase-adminsdk-wrdex-e244f01fb6.json")
-    firebase_admin.initialize_app(cred)
+#For image capture
+import time
+import threading
+import subprocess
 
-# Initialize Firestore
-db = firestore.client()
-# Email Configuration
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-EMAIL_ADDRESS = "your_email@gmail.com"  # Replace with your email
-EMAIL_PASSWORD = "your_password"       # Replace with your email password
-
-# Twilio Configuration
-TWILIO_ACCOUNT_SID = "your_account_sid"
-TWILIO_AUTH_TOKEN = "your_auth_token"
-TWILIO_PHONE_NUMBER = "your_twilio_phone_number"
-
-# Helper Functions
-def send_email(to_email, subject, body):
-    try:
-        msg = MIMEMultipart()
-        msg["From"] = EMAIL_ADDRESS
-        msg["To"] = to_email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body, "plain"))
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-            server.sendmail(EMAIL_ADDRESS, to_email, msg.as_string())
-        return True
-    except Exception as e:
-        st.error(f"Failed to send email: {e}")
-        return False
-
-def send_sms(to_phone, body):
-    try:
-        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-        client.messages.create(body=body, from_=TWILIO_PHONE_NUMBER, to=to_phone)
-        return True
-    except Exception as e:
-        st.error(f"Failed to send SMS: {e}")
-        return False
-
-# Add user details to Firestore
-def add_user_details(user_id, name, email, phone):
-    db.collection("users").document(user_id).set({
-        "name": name,
-        "email": email,
-        "phone": phone,
-    })
-
-# Fetch user details from Firestore
-def get_user_details(user_id):
-    doc = db.collection("users").document(user_id).get()
-    if doc.exists:
-        return doc.to_dict()
-    else:
-        return None
-
-# Add prediction alert to Firestore
-def add_prediction_alert(user_id, prediction, timestamp):
-    db.collection("alerts").add({
-        "user_id": user_id,
-        "prediction": prediction,
-        "timestamp": timestamp,
-    })
-
-# Fetch alerts for a user
-def get_user_alerts(user_id):
-    alerts = db.collection("alerts").where("user_id", "==", user_id).stream()
-    return [alert.to_dict() for alert in alerts]
 
 # Class Names
 class_name = [
@@ -109,6 +36,29 @@ def load_model():
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
+
+# Function to capture images using the CSI camera
+def capture_image(folder="captured_images", interval=10, num_images=1):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    for i in range(num_images):
+        image_path = os.path.join(folder, f"image_{i+1}.jpg")
+        subprocess.run([
+            "libcamera-still",
+            "-o", image_path,
+            "--awb", "auto",  # Adjust white balance
+            "--brightness", "0.0",  # Neutral brightness
+            "--contrast", "1.0",  # Neutral contrast
+            "--saturation", "0.0",  # Neutral saturation
+            "--timeout", "1000"  # Capture timeout in milliseconds
+        ])
+        time.sleep(interval)
+    return image_path
+
+    # Initialize session state for the captured image
+if "captured_image" not in st.session_state:
+    st.session_state.captured_image = None
+
 
 # Define function for prediction
 # Preprocess the image using keras.preprocessing
@@ -186,27 +136,29 @@ recommendations = {
             "Yellowing and wilting of affected leaves.",
             "Damaged leaves may drop prematurely (defoliation)."
         ],
+        "Image": "Leaf Miner.jpg",  # Leaf miner image path
         "Actions": [
             "Prune and destroy infested leaves which may still harbor the larvae.",
             "Encourage natural predators like parasitic wasps or predatory mirid bugs which disrupt the growth of the larvae in leaves.",
             "Inter-cropping the tomato with suitable wild plants such as sesame to enhance mirid activity.",
             "Place pheromone traps or yellow sticky traps to monitor and reduce adult population.",
             "Use insecticides such as Indoking 300SC or Benocarb 100SC which contains Indoxicarb and Emamectin Benzoate to fight the leaf miner flies.",
-            "Apply neem oil (*Azadirachtin*) or biological controls such as *Bacillus thuringiensis*."
+            "Apply neem oil (Azadirachtin) or biological controls such as Bacillus thuringiensis."
         ]
     },
     "Tomato Leaf Curl": {
-        "Scientific Name": "Tomato Yellow Leaf Curl Virus (TYLCV)",
+        "Scientific Name": "Tomato Leaf Curl Virus (TLCV)",
         "Symptoms": [
             "Upward curling of leaves.",
             "Stunted plant growth.",
             "Yellowing of leaf margins."
         ],
+        "Image": "Leaf Curl.jpg",  # Tomato leaf curl image path
         "Actions": [
             "Control whiteflies, which transmit the virus, using sticky traps.",
             "Remove and destroy infected plants immediately.",
-            "Use virus-resistant tomato varieties such as *Sophya F1* for planting.",
-            "Introduce biological insecticides containing *Beauveria bassiana*, a naturally occurring fungus. This fungus infects and controls whiteflies, offering an eco-friendly alternative to chemical interventions.",
+            "Use virus-resistant tomato varieties such as Sophya F1 for planting.",
+            "Introduce biological insecticides containing Beauveria bassiana, a naturally occurring fungus. This fungus infects and controls whiteflies, offering an eco-friendly alternative to chemical interventions.",
             "Practice crop rotation to minimize viral buildup.",
             "Use Neem oil,at a rate of 5ml per liter, which acts as a repellent and disrupt the life cycle of whiteflies.",
             "Consider using insecticides such as Presento® 200SP or Acetak 200SL that contain Acetamiprid which is effective against whiteflies."
@@ -219,10 +171,11 @@ recommendations = {
             "Chewed fruits and stems.",
             "Presence of caterpillars on plants."
         ],
+        "Image": "Tobacco Caterpillar.jpg",  # Tobacco Caterpillar image path
         "Actions": [
             "Handpick caterpillars and destroy them.",
             "Encourage natural predators like birds or beneficial insects.",
-            "Use biopesticides such as **Bacillus thuringiensis** or neem oil.",
+            "Use biopesticides such as *Bacillus thuringiensis* or neem oil.",
             "Consider using insecticides such as Emmaron 30SC that contain Lufenuron and Emmamectin benzoate which are effective against caterpillars.",
             "Apply pheromone traps to monitor adult moth population."
         ]
@@ -238,6 +191,7 @@ recommendations = {
             "Black or brown lesions on older leaves (early blight).",
             "Greasy-looking, gray-green lesions on leaves (late blight)."
         ],
+        "Image": "Bacterial Spot.jpg",  # Bacterial spot image path
         "Actions": [
             "Remove and destroy infected plant parts immediately.",
             "Avoid overhead watering to reduce moisture on foliage.",
@@ -248,59 +202,71 @@ recommendations = {
     }
 }
 
-# Create the Streamlit app
-# Check if the user is registered
-st.sidebar.header("User Login")
-user_id = st.sidebar.text_input("Enter your User ID")
-user = get_user_details(user_id) if user_id else None
+# Function to display recommendations
+def display_recommendation(predicted_class):
+    data = recommendations.get(predicted_class, {})
+    if not data:
+        st.error("No recommendations found for the selected disease.")
+        return
 
-if not user:
-    st.sidebar.subheader("New User Registration")
-    name = st.sidebar.text_input("Name")
-    email = st.sidebar.text_input("Email")
-    phone = st.sidebar.text_input("Phone Number")
+    st.header(predicted_class)
+    st.subheader(f"Scientific Name: {data.get('Scientific Name')}")
 
-    if st.sidebar.button("Register"):
-        if name and email and phone is not None:
-            add_user_details(user_id, name, email, phone)
-            st.sidebar.success("Registration successful! Please refresh to log in.")
+    # Layout for Symptoms and Image
+    col1, col2 = st.columns([2, 1])  # Adjust column proportions if needed
+
+    with col1:
+        st.subheader("Symptoms")
+        for symptom in data.get("Symptoms", []):
+            st.write(f"- {symptom}")
+
+    with col2:
+        # Resize the image to 512x512 and display
+        image_path = data.get("Image")
+        if image_path:
+            try:
+                image = Image.open(image_path)
+                resized_image = image.resize((512, 512))  # Resize to (512, 512)
+                st.image(resized_image, caption=f"Example of {predicted_class} symptoms", use_container_width=True)
+            except FileNotFoundError:
+                st.error("Image file not found.")
         else:
-            st.sidebar.error("All fields are required for registration.")
-else:
-    st.sidebar.success(f"Welcome, {user['name']}!")
-    st.sidebar.write("Logged in as:", user["email"])
+            st.error("No image available for this disease.")
+
+    st.subheader("Actions")
+    for action in data.get("Actions", []):
+        st.write(f"- {action}")
+
+# Create the Streamlit app
+
 # Sidebar
 st.sidebar.title('Dashboard')
 app_mode = st.sidebar.selectbox('Select Page', ['Home', 'About', 'Disease Recognition'])
 
 # Home Page
-def display_recommendation(predicted_class):
-    pass
-
-
 if app_mode == 'Home':
     st.title('TOMATO DISEASE CLASSIFICATION')
-    image_path = 'home page image.jpg'
+    image_path = 'home.jpg'
     st.image(image_path, use_container_width=True)
     st.markdown('''Our mission is to help farmers, gardeners, and plant enthusiasts quickly identify tomato diseases for healthier and more resilient crops. Just upload a plant image, and our advanced algorithms will analyze it to detect any signs of disease!
 
 ### 🌱 How It Works
-1. **Upload an Image**: Go to the **Disease Recognition** page and upload an image of your plant.
-2. **Image Analysis**: Our powerful machine learning model will scan the image for potential diseases.
-3. **View Results**: Get a diagnosis with actionable recommendations to help protect your tomato plants.
+1. *Upload an Image: Go to the **Disease Recognition* page and upload an image of your plant.
+2. *Image Analysis*: Our powerful machine learning model will scan the image for potential diseases.
+3. *View Results*: Get a diagnosis with actionable recommendations to help protect your tomato plants.
 
 ### 🌟 Why Choose Us?
-- **🌍 Accuracy**: Harnesses cutting-edge AI for precise disease detection.
-- **💡 User-Friendly**: Simple, intuitive interface for everyone.
-- **⚡ Fast and Efficient**: Receive results in seconds to support quick decision-making.
+- *🌍 Accuracy*: Harnesses cutting-edge AI for precise disease detection.
+- *💡 User-Friendly*: Simple, intuitive interface for everyone.
+- *⚡ Fast and Efficient*: Receive results in seconds to support quick decision-making.
 
 ### 🚀 Get Started
-Head to the **Disease Recognition** page in the sidebar, upload an image, and see our Tomato Disease Recognition System in action!
+Head to the *Disease Recognition* page in the sidebar, upload an image, and see our Tomato Disease Recognition System in action!
 
 ---
 
 ### 🧑‍🌾 About Us
-Visit the **About** page to learn more about our project, the team behind it, and our commitment to promoting healthier plants.
+Visit the *About* page to learn more about our project, the team behind it, and our commitment to promoting healthier plants.
 
 ---
     ''')
@@ -330,75 +296,80 @@ elif app_mode == 'About':
 
 elif app_mode == 'Disease Recognition':
     import time
-
     st.header('Disease Recognition')
 
-    input_option = st.radio("Choose an input method:", ("upload from device", "Take Photo"))
-    if input_option == "upload from device":
-        # Allow user to upload an image file
-        uploaded_file = st.file_uploader("Choose a tomato image...", type=["jpg", "jpeg", "png"])
-        if uploaded_file is not None:
-            st.image(uploaded_file, caption='Uploaded Image', use_container_width=True)
-            st.write('')
-        else:
-            st.error("Please upload an image first.")
-        # Predict Button
-        if st.button('Predict'):
-            if uploaded_file is not None:
+    input_option = st.radio("Choose an input method:",
+        options=["", "Upload from Device", "Take Photo"],
+        index=0,
+        format_func=lambda x: "select an option" if x == "" else x
+    )
+
+
+    # JavaScript for playing notification sound
+    def play_sound(file_path):
+        st.markdown(
+            f"""
+            <audio autoplay>
+                <source src="{file_path}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if input_option == "Upload from Device":
+        st.info("This option will trigger the CSI camera to capture 10 images.")
+
+        # Button to trigger the image capture
+        if st.button('Start Image Capture'):
+            with st.spinner('Capturing image...'):
+                captured_image_path = capture_image()
+                st.session_state.captured_image = captured_image_path
+            st.success('Image captured!')
+
+        # Display captured image 
+        if st.session_state.captured_image:
+            image_path = st.session_state.captured_image
+            if st.button('Show Captured Image'):
+                image = Image.open(image_path)
+                st.image(image, caption="Captured Image", use_container_width=True)
+
+
+            # Predict Button
+            if st.button('Predict'):
                 with st.spinner('Please wait...'):
                     model = load_model()  # Load the model
                     if model:
-                        result_index, prediction_probs = predict(uploaded_file, model)
+                        result_index, prediction_probs = predict(image_path, model)
                         if result_index is not None:
-
                             predicted_class = class_name[result_index]
+                            st.success(f'Model is predicting it is {predicted_class}')
 
-                            st.success(f'Model is predicting it’s  {predicted_class}')
-                            st.balloons()
-                            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            add_prediction_alert(user_id, predicted_class, timestamp)
-
-                            # Send Email and SMS Alerts
-                            email_status = send_email(user["email"], "Plant Disease Alert",
-                                                      f"Hello {user['name']},\n\nWe detected {predicted_class} in your tomato plant. Please take immediate action.")
-                            sms_status = send_sms(user["phone"],
-                                                  f"Plant Disease Alert: {predicted_class} detected in your tomato plant.")
-
-                            if email_status and sms_status:
-                                st.info("Alerts sent to your email and phone.")
+                            # Play sound if the prediction is not "Healthy"
+                            if predicted_class != "Healthy":
+                                play_sound("bell-notification-277267.mp3")
 
                             progress = st.progress(0)
                             for i in range(100):
                                 time.sleep(0.05)  # Simulate some work
-                            progress.progress(i + 1)
-
+                                progress.progress(i + 1)
                             if predicted_class in recommendations:
-                                # Display the recommendation for the predicted class
+                                 # Display the recommendation for the predicted class
                                 display_recommendation(predicted_class)
-                                st.subheader('Recommended Actions:')
-                                st.markdown(
-                                    f" 🧪 **Scientific Name:** {recommendations[predicted_class]['Scientific Name']}")
-                                st.markdown(f" 🩺 **Symptoms:**")
-                                st.write("\n".join(
-                                    f"- {symptom}" for symptom in recommendations[predicted_class]['Symptoms']))
-                                st.markdown(f" 🛠️ **Actions:**")
-                                st.write(
-                                    "\n".join(f"- {action}" for action in recommendations[predicted_class]['Actions']))
-                            else:
-                                st.error(f"No recommendations available for {predicted_class}")
 
     elif input_option == "Take Photo":
         # Allow user to take an image using device camera
         st.info("Please ensure your browser allows camera access to use this feature.")
 
         camera_image = st.camera_input("Take a picture")
-        if camera_image is not None:
-            # open image taken
-            image = Image.open(io.BytesIO(camera_image.getvalue()))
-            st.image(image, caption="Taken image", use_container_width=True)
-            st.write('')
-        else:
-            st.error("Please take a picture first.")
+        if st.button('Show Image'):
+            if camera_image is not None:
+               #open image taken
+               image = Image.open(io.BytesIO(camera_image.getvalue()))
+               st.image(image, caption="Taken image", use_container_width=True)
+               st.write('')
+            else:
+                st.error("Please take a picture first.")
         # Predict Button
         if st.button('Predict'):
             if camera_image is not None:
@@ -410,44 +381,25 @@ elif app_mode == 'Disease Recognition':
 
                             predicted_class = class_name[result_index]
 
-                            st.success(f'Model is predicting it is  {predicted_class}')
-                            st.balloons()
-                            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            add_prediction_alert(user_id, predicted_class, timestamp)
+                            st.success(f'Model is predicting it’s  {predicted_class}')
 
-                            # Send Email and SMS Alerts
-                            email_status = send_email(user["email"], "Plant Disease Alert",
-                                                      f"Hello {user['name']},\n\nWe detected {predicted_class} in your tomato plant. Please take immediate action.")
-                            sms_status = send_sms(user["phone"],
-                                                  f"Plant Disease Alert: {predicted_class} detected in your tomato plant.")
 
-                            if email_status and sms_status:
-                                st.info("Alerts sent to your email and phone.")
+                            # Play sound if the prediction is not "Healthy"
+                            if predicted_class != "Healthy":
+                                play_sound("bell-notification-277267.mp3")
+
 
                             progress = st.progress(0)
                             for i in range(100):
                                 time.sleep(0.05)  # Simulate some work
                             progress.progress(i + 1)
 
+
                             if predicted_class in recommendations:
                                 # Display the recommendation for the predicted class
                                 display_recommendation(predicted_class)
-                                st.subheader('Recommended Actions:')
-                                st.markdown(
-                                    f" 🧪 **Scientific Name:** {recommendations[predicted_class]['Scientific Name']}")
-                                st.markdown(f" 🩺 **Symptoms:**")
-                                st.write("\n".join(
-                                    f"- {symptom}" for symptom in recommendations[predicted_class]['Symptoms']))
-                                st.markdown(f" 🛠️ **Actions:**")
-                                st.write(
-                                    "\n".join(f"- {action}" for action in recommendations[predicted_class]['Actions']))
-                            else:
-                                st.error(f"No recommendations available for {predicted_class}")
-elif app_mode == "View Alerts":
-        st.title("Your Alerts")
-        alerts = get_user_alerts(user_id)
-        if alerts:
-            for alert in alerts:
-                st.write(alert)
-        else:
-            st.info("No alerts found.")
+
+
+
+
+
