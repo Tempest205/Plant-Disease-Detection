@@ -4,7 +4,6 @@ import streamlit as st
 import tensorflow as tf
 from PIL import Image
 import numpy as np
-import pandas as pd
 import csv
 import io
 
@@ -130,7 +129,7 @@ recommendations = {
             "Yellowing and wilting of affected leaves.",
             "Damaged leaves may drop prematurely (defoliation)."
         ],
-        "Image": "Leaf Miner.jpg",  # Leaf miner image path
+        "Image": "Leaf Miner Flies.jpg",  # Leaf miner image path
         "Actions": [
             "Prune and destroy infested leaves which may still harbor the larvae.",
             "Encourage natural predators like parasitic wasps or predatory mirid bugs which disrupt the growth of the larvae in leaves.",
