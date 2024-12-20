@@ -295,7 +295,7 @@ elif app_mode == 'About':
 # Raspberry Pi API endpoint
 RPI_API_URL = "http://192.168.137.79:8000/capture_and_predict"
 
-if app_mode == 'Disease Recognition':
+elif app_mode == 'Disease Recognition':
     st.header('Disease Recognition')
 
     input_option = st.radio("Choose an input method:",
