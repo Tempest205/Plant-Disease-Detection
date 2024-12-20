@@ -362,13 +362,13 @@ elif app_mode == 'Disease Recognition':
         st.info("Please ensure your browser allows camera access to use this feature.")
 
         camera_image = st.camera_input("Take a picture")
-            if camera_image is not None:
-               #open image taken
-               image = Image.open(io.BytesIO(camera_image.getvalue()))
-               st.image(image, caption="Taken image", use_container_width=True)
-               st.write('')
-            else:
-                st.error("Please take a picture first.")
+        if camera_image is not None:
+            #open image taken
+            image = Image.open(io.BytesIO(camera_image.getvalue()))
+            st.image(image, caption="Taken image", use_container_width=True)
+            st.write('')
+        else:
+            st.error("Please take a picture first.")
         # Predict Button
         if st.button('Predict'):
             if camera_image is not None:
