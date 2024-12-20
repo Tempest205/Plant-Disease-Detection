@@ -362,7 +362,6 @@ elif app_mode == 'Disease Recognition':
         st.info("Please ensure your browser allows camera access to use this feature.")
 
         camera_image = st.camera_input("Take a picture")
-        if st.button('Show Image'):
             if camera_image is not None:
                #open image taken
                image = Image.open(io.BytesIO(camera_image.getvalue()))
