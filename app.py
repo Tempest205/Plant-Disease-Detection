@@ -136,7 +136,7 @@ recommendations = {
             "Encourage natural predators like parasitic wasps or predatory mirid bugs which disrupt the growth of the larvae in leaves.",
             "Inter-cropping the tomato with suitable wild plants such as sesame to enhance mirid activity.",
             "Place pheromone traps or yellow sticky traps to monitor and reduce adult population.",
-            "Use insecticides such as Indoking 300SC or Benocarb 100SC which contains Indoxicarb and Emamectin Benzoate to fight the leaf miner flies.",
+            "Use insecticides such as Indoking 300SC(*Dosage: 125ml in 1000 L of water per hectares (2.5ml in 20L of water)*) or Benocarb 100SC(*Dosage: 10ml/20L 0r 250ml/1000L*) which contains Indoxicarb and Emamectin Benzoate to fight the leaf miner flies.",
             "Apply neem oil (Azadirachtin) or biological controls such as Bacillus thuringiensis."
         ]
     },
@@ -155,7 +155,7 @@ recommendations = {
             "Introduce biological insecticides containing Beauveria bassiana, a naturally occurring fungus. This fungus infects and controls whiteflies, offering an eco-friendly alternative to chemical interventions.",
             "Practice crop rotation to minimize viral buildup.",
             "Use Neem oil,at a rate of 5ml per liter, which acts as a repellent and disrupt the life cycle of whiteflies.",
-            "Consider using insecticides such as Presento® 200SP or Acetak 200SL that contain Acetamiprid which is effective against whiteflies."
+            "Consider using insecticides such as Presento® 200SP(*Dosage:0.25 g per litre of water*) or Acetak 200SL(*Dosage:500ml/ha/1000L of water, 5-10ml/20L*) that contain Acetamiprid which is effective against whiteflies."
         ]
     },
     "Tobacco Caterpillar": {
@@ -170,7 +170,7 @@ recommendations = {
             "Handpick caterpillars and destroy them.",
             "Encourage natural predators like birds or beneficial insects.",
             "Use biopesticides such as *Bacillus thuringiensis* or neem oil.",
-            "Consider using insecticides such as Emmaron 30SC that contain Lufenuron and Emmamectin benzoate which are effective against caterpillars.",
+            "Consider using insecticides such as Emmaron 30SC(*Dosage:15ml/20L of water*) that contain Lufenuron and Emmamectin benzoate which are effective against caterpillars.",
             "Apply pheromone traps to monitor adult moth population."
         ]
     },
@@ -189,8 +189,8 @@ recommendations = {
         "Actions": [
             "Remove and destroy infected plant parts immediately.",
             "Avoid overhead watering to reduce moisture on foliage.",
-            "Apply copper-based fungicides for bacterial spot.",
-            "Use fungicides such as chlorothalonil or mancozeb for early and late blight.",
+            "Apply copper-based fungicides such as Green Cop® 500WP and Trinity Gold® 452WP(*Dosage:2.5-3.0 g per litre of water*) for bacterial spot.",
+            "Use fungicides such ABSOLUTE STAR 400 SC(*at 10ml in 20L of water*) and TOWER EXTREME 680 WG(*at 50g in 20L of water*) for early and late blight.",
             "Plant disease-resistant varieties and ensure good air circulation."
         ]
     }
@@ -245,7 +245,7 @@ if app_mode == 'Home':
     st.markdown('''Our mission is to help farmers, gardeners, and plant enthusiasts quickly identify tomato diseases for healthier and more resilient crops. Just upload a plant image, and our advanced algorithms will analyze it to detect any signs of disease!
 
 ### 🌱 How It Works
-1. *Upload an Image: Go to the **Disease Recognition* page and upload an image of your plant.
+1. *Upload an Image*: Go to the *Disease Recognition* page and upload an image of your plant.
 2. *Image Analysis*: Our powerful machine learning model will scan the image for potential diseases.
 3. *View Results*: Get a diagnosis with actionable recommendations to help protect your tomato plants.
 
