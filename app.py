@@ -311,7 +311,7 @@ elif app_mode == 'Disease Recognition':
         st.markdown(
             f"""
             <audio autoplay>
-                <source src="{file_path}" type="audio/mpeg">
+                <source src="{Nextel.mp3}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
             """,
@@ -348,7 +348,7 @@ elif app_mode == 'Disease Recognition':
 
                             # Play sound if the prediction is not "Healthy"
                             if predicted_class != "Healthy":
-                                play_sound("bell-notification-277267.mp3")
+                                play_sound("Nextel.mp3")
 
                             progress = st.progress(0)
                             for i in range(100):
