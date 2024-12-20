@@ -185,7 +185,7 @@ recommendations = {
             "Black or brown lesions on older leaves (early blight).",
             "Greasy-looking, gray-green lesions on leaves (late blight)."
         ],
-        "Image": "Bacterial Spot.jpg",  # Bacterial spot image path
+        "Image": "Bacterial spot__Blight.jpg",  # Bacterial spot image path
         "Actions": [
             "Remove and destroy infected plant parts immediately.",
             "Avoid overhead watering to reduce moisture on foliage.",
