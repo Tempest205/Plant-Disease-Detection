@@ -386,7 +386,7 @@ elif app_mode == 'Disease Recognition':
 
                             # Play sound if the prediction is not "Healthy"
                             if predicted_class != "Healthy":
-                                play_sound("bell-notification-277267.mp3")
+                                play_sound("mixkit-achievement-bell-600.wav")
 
 
                             progress = st.progress(0)
