@@ -21,7 +21,7 @@ class_name = ['Bacterial spot__Blight', 'Not Recognized', 'Tomato Healthy', 'Tom
 @st.cache_resource
 def load_model():
     try:
-        model = tf.keras.models.load_model('NTomato_model_best.keras')
+        model = tf.keras.models.load_model('Tomato_model_best.keras')
 
         st.write("Model loaded successfully")
 
