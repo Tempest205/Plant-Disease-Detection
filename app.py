@@ -9,10 +9,12 @@ import csv
 import io
 from fastapi import FastAPI, UploadFile, File
 import requests
-#For image capture
+# For image capture
 import time
 import threading
 import subprocess
+
+from pandas.core.arrays import interval
 
 app = FastAPI()
 # Class Names
@@ -23,6 +25,7 @@ class_name = [
     'Tomato Leaf Curl',
     'Tomato Leaf Miner Flies'
 ]
+
 
 # Load trained model
 @st.cache_resource
@@ -38,6 +41,7 @@ def load_model():
         st.error(f"Error loading model: {e}")
         return None
 
+
 @app.post("/capture_and_predict")
 def capture_and_predict():
     """Capture an image using CSI camera and make predictions."""
@@ -48,13 +52,15 @@ def capture_and_predict():
         "libcamera-still",
         "-o", image_path,
     ])
-    
+
     # Add any desired delay (e.g., interval)
     time.sleep(interval)
-    
+
     return image_path
 
     # Initialize session state for the captured image
+
+
 if "captured_image" not in st.session_state:
     st.session_state.captured_image = None
 
@@ -68,9 +74,10 @@ def preprocess_image(image):
         # Resize with LANCZOS filter to match model input size
         image = image.resize((512, 512), Image.LANCZOS)
         # Convert to numpy array and normalize pixel values to [0, 1]
-        input_arr = np.array(image, dtype=np.float32)   # Normalize directly
+        input_arr = np.array(image, dtype=np.float32)  # Normalize directly
         return np.expand_dims(input_arr, axis=0)  # Add batch dimension
     raise ValueError("Uploaded file is not a valid image")
+
 
 # Prediction function
 def predict(image_path, model):
@@ -95,6 +102,7 @@ def predict(image_path, model):
     except Exception as e:
         st.error(f"Error during prediction: {e}")
         return None, None
+
 
 # Function to predict on multiple images in a folder
 def predict_images_in_folder(folder_path, class_name, model):
@@ -201,6 +209,7 @@ recommendations = {
     }
 }
 
+
 # Function to display recommendations
 def display_recommendation(predicted_class):
     data = recommendations.get(predicted_class, {})
@@ -235,6 +244,7 @@ def display_recommendation(predicted_class):
     st.subheader("Actions")
     for action in data.get("Actions", []):
         st.write(f"- {action}")
+
 
 # Create the Streamlit app
 
@@ -290,73 +300,76 @@ elif app_mode == 'About':
     Thank you for being a part of this journey toward smarter, sustainable farming!
     ''')
 
-
 # Prediction Page
 # Raspberry Pi API endpoint
 RPI_API_URL = "http://192.168.137.79:8000/capture_and_predict"
 
-elif app_mode == 'Disease Recognition':
-    st.header('Disease Recognition')
+st.header('Disease Recognition')
 
-    input_option = st.radio("Choose an input method:",
-        options=["", "Upload from Device", "Take Photo"],
-        index=0,
-        format_func=lambda x: "select an option" if x == "" else x
-    )
+# Upload option
+input_option = st.radio(
+    "Choose an input method:",
+    options=["", "Upload from Device", "Capture from CSI Camera"],
+    index=0,
+    format_func=lambda x: "Select an option" if x == "" else x
+)
 
+if input_option == "Capture from CSI Camera":
+    st.info("This option will use the Raspberry Pi's CSI camera for image capture.")
 
-    # JavaScript for playing notification sound
-    def play_sound(file_path):
-        st.markdown(
-            f"""
+# JavaScript for playing notification sound
+def play_sound(file_path):
+    st.markdown(
+        f"""
             <audio autoplay>
                 <source src="{file_path}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
             """,
-            unsafe_allow_html=True,
-        )
+        unsafe_allow_html=True,
+    )
 
     if input_option == "Upload from Device":
         st.info("This option will trigger the CSI camera to capture 10 images.")
 
-        # Button to trigger the Raspberry Pi API
+    # Button to trigger the Raspberry Pi API
     if st.button("Capture and Predict"):
         with st.spinner("Communicating with Raspberry Pi..."):
             try:
                 response = requests.post(RPI_API_URL)
                 if response.status_code == 200:
                     data = response.json()
+            except requests.exceptions.RequestException as e:
+                st.error(f"Failed to communicate with Raspberry Pi: {e}")
 
-        # Display captured image 
-        if st.session_state.captured_image:
-            image_path = st.session_state.captured_image
-            if st.button('Show Captured Image'):
-                image = Image.open(image_path)
-                st.image(image, caption="Captured Image", use_container_width=True)
+    # Display captured image
+    if st.session_state.captured_image:
+        image_path = st.session_state.captured_image
+        if st.button('Show Captured Image'):
+            image = Image.open(image_path)
+            st.image(image, caption="Captured Image", use_container_width=True)
 
+        # Predict Button
+        if st.button('Predict'):
+            with st.spinner('Please wait...'):
+                model = load_model()  # Load the model
+                if model:
+                    result_index, prediction_probs = predict(image_path, model)
+                    if result_index is not None:
+                        predicted_class = class_name[result_index]
+                        st.success(f'Model is predicting it is {predicted_class}')
 
-            # Predict Button
-            if st.button('Predict'):
-                with st.spinner('Please wait...'):
-                    model = load_model()  # Load the model
-                    if model:
-                        result_index, prediction_probs = predict(image_path, model)
-                        if result_index is not None:
-                            predicted_class = class_name[result_index]
-                            st.success(f'Model is predicting it is {predicted_class}')
+                        # Play sound if the prediction is not "Healthy"
+                        if predicted_class != "Healthy":
+                            play_sound("bell-notification-277267.mp3")
 
-                            # Play sound if the prediction is not "Healthy"
-                            if predicted_class != "Healthy":
-                                play_sound("bell-notification-277267.mp3")
-
-                            progress = st.progress(0)
-                            for i in range(100):
-                                time.sleep(0.05)  # Simulate some work
-                                progress.progress(i + 1)
-                            if predicted_class in recommendations:
-                                 # Display the recommendation for the predicted class
-                                display_recommendation(predicted_class)
+                        progress = st.progress(0)
+                        for i in range(100):
+                            time.sleep(0.05)  # Simulate some work
+                            progress.progress(i + 1)
+                        if predicted_class in recommendations:
+                            # Display the recommendation for the predicted class
+                            display_recommendation(predicted_class)
 
     elif input_option == "Take Photo":
         # Allow user to take an image using device camera
@@ -365,10 +378,10 @@ elif app_mode == 'Disease Recognition':
         camera_image = st.camera_input("Take a picture")
         if st.button('Show Image'):
             if camera_image is not None:
-               #open image taken
-               image = Image.open(io.BytesIO(camera_image.getvalue()))
-               st.image(image, caption="Taken image", use_container_width=True)
-               st.write('')
+                # open image taken
+                image = Image.open(io.BytesIO(camera_image.getvalue()))
+                st.image(image, caption="Taken image", use_container_width=True)
+                st.write('')
             else:
                 st.error("Please take a picture first.")
         # Predict Button
@@ -376,29 +389,26 @@ elif app_mode == 'Disease Recognition':
             if camera_image is not None:
                 with st.spinner('Please wait...'):
                     model = load_model()  # Load the model
-                    if model:
-                        result_index, prediction_probs = predict(camera_image, model)
-                        if result_index is not None:
+                if model:
+                    result_index, prediction_probs = predict(camera_image, model)
+                    if result_index is not None:
 
-                            predicted_class = class_name[result_index]
+                        predicted_class = class_name[result_index]
 
-                            st.success(f'Model is predicting it’s  {predicted_class}')
+                        st.success(f'Model is predicting it’s  {predicted_class}')
 
+                        # Play sound if the prediction is not "Healthy"
+                        if predicted_class != "Healthy":
+                            play_sound("bell-notification-277267.mp3")
 
-                            # Play sound if the prediction is not "Healthy"
-                            if predicted_class != "Healthy":
-                                play_sound("bell-notification-277267.mp3")
+                        progress = st.progress(0)
+                        for i in range(100):
+                            time.sleep(0.05)  # Simulate some work
+                        progress.progress(i + 1)
 
-
-                            progress = st.progress(0)
-                            for i in range(100):
-                                time.sleep(0.05)  # Simulate some work
-                            progress.progress(i + 1)
-
-
-                            if predicted_class in recommendations:
-                                # Display the recommendation for the predicted class
-                                display_recommendation(predicted_class)
+                        if predicted_class in recommendations:
+                            # Display the recommendation for the predicted class
+                            display_recommendation(predicted_class)
 
 
 
