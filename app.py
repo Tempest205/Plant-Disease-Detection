@@ -15,13 +15,13 @@ import subprocess
 
 
 # Class Names
-class_name =  ['Tomato Leaf Miner Flies', 'Bacterial spot__Blight', 'Tobacco Caterpillar', 'Tomato Healthy', 'Tomato Leaf Curl']
+class_name =  ['Bacterial spot__Blight', 'Not Recognized', 'Tomato Healthy', 'Tomato Leaf Miner Flies', 'Tobacco Caterpillar', 'Tomato Leaf Curl']
 
 # Load trained model
 @st.cache_resource
 def load_model():
     try:
-        model = tf.keras.models.load_model('Tomato_model_best.keras')
+        model = tf.keras.models.load_model('NTomato_model_best.keras')
 
         st.write("Model loaded successfully")
 
