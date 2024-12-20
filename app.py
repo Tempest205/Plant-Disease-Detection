@@ -20,6 +20,7 @@ class_name = [
     'Tobacco Caterpillar',
     'Tomato Healthy',
     'Tomato Leaf Curl',
+    'Not Recognized',
     'Tomato Leaf Miner Flies'
 ]
 
