@@ -165,7 +165,7 @@ recommendations = {
             "Chewed fruits and stems.",
             "Presence of caterpillars on plants."
         ],
-        "Image": "Tobacco Caterpillar.jpg",  # Tobacco Caterpillar image path
+        "Image": "Caterpillar.jpg",  # Tobacco Caterpillar image path
         "Actions": [
             "Handpick caterpillars and destroy them.",
             "Encourage natural predators like birds or beneficial insects.",
