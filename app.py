@@ -311,7 +311,7 @@ elif app_mode == 'Disease Recognition':
         st.markdown(
             f"""
             <audio autoplay>
-                <source src="{Nextel.mp3}" type="audio/mpeg">
+                <source src="{file_path}" type="audio/mpeg">
                 Your browser does not support the audio element.
             </audio>
             """,
