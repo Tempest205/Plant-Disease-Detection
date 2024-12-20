@@ -15,14 +15,7 @@ import subprocess
 
 
 # Class Names
-class_name = [
-    'Bacterial Spot__Blight',
-    'Tobacco Caterpillar',
-    'Tomato Healthy',
-    'Tomato Leaf Curl',
-    'Not Recognized',
-    'Tomato Leaf Miner Flies'
-]
+class_name = ['Bacterial spot__Blight', 'Not Recognized', 'Tomato Healthy', 'Tomato Leaf Miner Flies', 'Tobacco Caterpillar', 'Tomato Leaf Curl']
 
 # Load trained model
 @st.cache_resource
