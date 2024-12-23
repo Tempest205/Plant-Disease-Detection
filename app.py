@@ -178,7 +178,7 @@ recommendations = {
             "Apply pheromone traps to monitor adult moth population."
         ]
     },
-    "Bacterial spot__Blight": {
+    "Bacterial Spot__Blight": {
         "Scientific Name": [
             "Xanthomonas spp. (Bacterial Spot)",
             "Phytophthora infestans (Late Blight)",
