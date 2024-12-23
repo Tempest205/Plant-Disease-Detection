@@ -14,7 +14,7 @@ import subprocess
 
 
 # Class Names
-class_name =  class_name = ['Bacterial Spot__Blight',
+class_name = ['Bacterial Spot__Blight',
               'Not Recognized',
               'Tobacco Caterpillar',
               'Tomato Healthy',
